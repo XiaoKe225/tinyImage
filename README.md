@@ -1,9 +1,10 @@
-# TinyImage 2.1
+# TinyImage 2.1.1
 
 纯本地桌面图片压缩工具（**Tauri 2 + Rust**）。  
 不调用 TinyPNG，不消耗云端额度，断网可压缩。
 
-支持：JPG / PNG / WebP / GIF / BMP / TIFF / ICO。
+支持：JPG / PNG / WebP / GIF / BMP / TIFF / ICO。  
+主界面可打开 **打赏支持**（本地展示支付宝 / 微信收款码，不联网）。
 
 ## 开发
 
@@ -32,7 +33,7 @@ npm run test:rust
 npm run package:win
 ```
 
-产物：`src-tauri\target\release\bundle\nsis\TinyImage_2.1.0_x64-setup.exe`
+产物：`src-tauri\target\release\bundle\nsis\TinyImage_2.1.1_x64-setup.exe`
 
 本阶段**无**自动更新、**无**代码签名。
 
@@ -49,4 +50,4 @@ npm run package:win
 ## 文档
 
 - `身份卡_优化版.md`
-- `技术实施白皮书_v1.0.md`（当前 **v1.29.0** · T004 安装验收已结案；T031 仓库整理）
+- `技术实施白皮书_v1.0.md`（当前 **v1.30.0** · T032 打赏；T004 已结案）

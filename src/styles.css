@@ -258,3 +258,48 @@ body {
 #skip-list li {
   margin-bottom: 4px;
 }
+
+.footer-actions {
+  margin-top: auto;
+  padding-top: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.btn.tip {
+  background: #21262d;
+  border: 1px solid #3d444d;
+  color: #e6edf3;
+  padding: 5px 12px;
+}
+
+.btn.tip:hover {
+  border-color: #58a6ff;
+  color: #58a6ff;
+}
+
+.modal-card.tip-card {
+  width: min(100%, 420px);
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+}
+
+.tip-msg {
+  margin-bottom: 10px;
+  font-size: 11px;
+  color: #8b949e;
+}
+
+.tip-qr {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  background: #0d1117;
+}
+
+.tip-card .modal-actions .btn {
+  flex: 1 1 100%;
+}

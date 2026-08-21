@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { LogicalPosition } from "@tauri-apps/api/dpi";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import tipQrUrl from "./assets/tip-qr.png";
 
 type ProgressEvent = {
   done: number;
@@ -56,6 +57,7 @@ const el = {
   skipList: () => document.getElementById("skip-list"),
   intensity: () => document.getElementById("intensity") as HTMLInputElement | null,
   intensityVal: () => document.getElementById("intensity-val"),
+  btnTip: () => document.getElementById("btn-tip") as HTMLButtonElement | null,
 };
 
 function clampIntensity(n: number): number {
@@ -190,6 +192,30 @@ function confirmReplace(message: string): Promise<boolean> {
     document.addEventListener("keydown", onKey);
     okBtn.focus();
   });
+}
+
+/** 打赏：本地收款码弹窗（离线资源，零网络） */
+function openTipModal() {
+  const modal = document.getElementById("tip-modal");
+  const img = document.getElementById("tip-qr") as HTMLImageElement | null;
+  const closeBtn = document.getElementById("tip-close");
+  const backdrop = document.getElementById("tip-backdrop");
+  if (!modal || !img || !closeBtn) return;
+  img.src = tipQrUrl;
+  modal.hidden = false;
+  const finish = () => {
+    modal.hidden = true;
+    closeBtn.removeEventListener("click", finish);
+    backdrop?.removeEventListener("click", finish);
+    document.removeEventListener("keydown", onKey);
+  };
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape") finish();
+  };
+  closeBtn.addEventListener("click", finish);
+  backdrop?.addEventListener("click", finish);
+  document.addEventListener("keydown", onKey);
+  closeBtn.focus();
 }
 
 function setStatus(text: string, isError = false) {
@@ -342,6 +368,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   await listen<ProgressEvent>("compress-progress", (event) => {
     updateProgress(event.payload);
   });
+
+  el.btnTip()?.addEventListener("click", () => openTipModal());
 
   el.btnCancel()?.addEventListener("click", () => {
     void invoke("cancel_batch");

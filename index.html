@@ -34,6 +34,9 @@
         <p class="fail-title skip-title">跳过列表（含原因）</p>
         <ul id="skip-list"></ul>
       </div>
+      <div class="footer-actions">
+        <button type="button" id="btn-tip" class="btn tip">打赏支持</button>
+      </div>
     </div>
 
     <div id="confirm-modal" class="modal" hidden>
@@ -44,6 +47,23 @@
         <div class="modal-actions">
           <button type="button" id="confirm-ok" class="btn primary">确定</button>
           <button type="button" id="confirm-cancel" class="btn secondary">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tip-modal" class="modal" hidden>
+      <div class="modal-backdrop" id="tip-backdrop"></div>
+      <div
+        class="modal-card tip-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tip-title"
+      >
+        <p id="tip-title" class="modal-title">打赏支持</p>
+        <p class="modal-msg tip-msg">感谢支持 · 本地展示收款码，不联网、不上传</p>
+        <img id="tip-qr" class="tip-qr" alt="支付宝 / 微信支付收款码" />
+        <div class="modal-actions">
+          <button type="button" id="tip-close" class="btn secondary">关闭</button>
         </div>
       </div>
     </div>
