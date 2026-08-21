@@ -1,4 +1,45 @@
-node_modules/
-output/
-yarn*
-.vscode/
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# One-off agent / bench dumps at repo root
+t0*.txt
+*-run-*.txt
+*-x5.txt
+*-x20.txt
+
+# Node / Vite
+node_modules
+dist
+dist-ssr
+*.local
+
+# Rust / Tauri
+src-tauri/target
+src-tauri/fixtures_user_ico.ico
+src-tauri/fixture_*.ico
+*.exe
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+Thumbs.db
+
+# Editor / recovery junk
+*.try
+*.recovered.txt
+

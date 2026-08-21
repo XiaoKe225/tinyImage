@@ -1,14 +1,52 @@
-# TinyImage
+# TinyImage 2.1
 
-当我们需要上传大量的图片时，大小过大的图片会大大降低网页或应用的加载速度，给用户带来不良体验。因此，我们需要对图片进行压缩，以提高图片加载速度和页面性能。这时，我们可以使用一个名为 Tinyimage 的图片压缩软件，它可以帮助我们轻松地压缩图片，而且操作简单方便。
+纯本地桌面图片压缩工具（**Tauri 2 + Rust**）。  
+不调用 TinyPNG，不消耗云端额度，断网可压缩。
 
-Tinyimage 是一个开源的图片压缩工具，支持 JPG、PNG、GIF 等多种图片格式，它可以将图片文件大小缩小到原来的 70% 以下，而且不会损失图片的视觉质量。在压缩过程中，Tinyimage 会自动优化压缩算法，让用户能够得到最优的压缩结果。
+支持：JPG / PNG / WebP / GIF / BMP / TIFF / ICO。
 
-使用 Tinyimage 压缩图片非常简单，只需要将需要压缩的图片拖放到 Tinyimage 窗口中，即可自动压缩图片并显示压缩后的文件大小和压缩比例。另外，用户还可以通过调整 Tinyimage 的压缩设置，来获得更好的压缩效果。
+## 开发
 
-Tinyimage 的界面简洁明了，提供了良好的用户体验，而且功能强大，使用方便。它还提供了命令行接口，用户可以在命令行中使用 Tinyimage 进行图片压缩，极大地方便了开发者的使用。
+在项目根目录：
 
-总之，Tinyimage 是一个非常优秀的图片压缩工具，它不仅提供了强大的压缩功能，而且使用起来十分简单。对于需要频繁上传图片的用户和开发者来说，Tinyimage 是一个必备的工具。 
+```bash
+npm install
+npm run start
+```
 
-## 下载
-### [下载](https://github.com/focusbe/tinyImage/releases)
+**Jpegli 构建**需本机 **CMake** + **MSVC Build Tools**（首次 `cargo`/`tauri` 会编译 `src-tauri/vendor/jpegli-sys`）。
+
+**不要**在未授权时执行打包命令。
+
+## 测试
+
+```bash
+npm run test:rust
+```
+
+## 打包（须授权）
+
+仅当维护者书面 **「授权打包」**（或「授权 release」）后执行：
+
+```bash
+npm run package:win
+```
+
+产物：`src-tauri\target\release\bundle\nsis\TinyImage_2.1.0_x64-setup.exe`
+
+本阶段**无**自动更新、**无**代码签名。
+
+## 仓库结构（精简）
+
+| 路径 | 职责 |
+|---|---|
+| `src/` | 前端（Vite + TypeScript） |
+| `src-tauri/` | Rust 压缩引擎、队列、Tauri 壳 |
+| `legacy-electron/` | 旧 Electron 1.2.x（仅对照，不演进） |
+| `身份卡_优化版.md` | AI / 协作纪律 |
+| `技术实施白皮书_v1.0.md` | 产品蓝图（文内修订号为准） |
+
+## 文档
+
+- `身份卡_优化版.md`
+- `技术实施白皮书_v1.0.md`（当前 **v1.29.0** · T004 安装验收已结案；T031 仓库整理）

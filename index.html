@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TinyImage</title>
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+  <body>
+    <div id="drop" class="drop">
+      <p class="hint">拖入文件或文件夹</p>
+      <p class="sub">纯本地 · JPG/PNG/WebP/GIF/BMP/TIFF/ICO · 可同时处理多张</p>
+      <div class="intensity" id="intensity-wrap">
+        <label class="intensity-label" for="intensity"
+          >压缩力度 <span id="intensity-val">0</span>
+          <span class="q-hint">（质量约 <span id="quality-pct">100</span>%）</span></label
+        >
+        <input type="range" id="intensity" min="0" max="100" value="0" />
+        <p class="intensity-hint">默认 0：优先画质，文件会小一些；力度越大，体积越小（力度会自动记住）</p>
+      </div>
+      <p id="status" class="status">就绪</p>
+      <div class="progress-wrap" id="progress-wrap" hidden>
+        <div class="bar"><span id="bar-fill"></span></div>
+        <p class="progress-text" id="progress-text">0/0</p>
+        <button type="button" id="btn-cancel" class="btn">取消剩余</button>
+      </div>
+      <div class="fail-panel" id="fail-panel" hidden>
+        <p class="fail-title">失败列表</p>
+        <ul id="fail-list"></ul>
+        <button type="button" id="btn-copy-fail" class="btn secondary">复制失败/跳过</button>
+      </div>
+      <div class="fail-panel skip-panel" id="skip-panel" hidden>
+        <p class="fail-title skip-title">跳过列表（含原因）</p>
+        <ul id="skip-list"></ul>
+      </div>
+    </div>
+
+    <div id="confirm-modal" class="modal" hidden>
+      <div class="modal-backdrop" id="confirm-backdrop"></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+        <p id="confirm-title" class="modal-title">确认压缩</p>
+        <p id="confirm-msg" class="modal-msg"></p>
+        <div class="modal-actions">
+          <button type="button" id="confirm-ok" class="btn primary">确定</button>
+          <button type="button" id="confirm-cancel" class="btn secondary">取消</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

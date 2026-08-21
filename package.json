@@ -1,83 +1,23 @@
 {
   "name": "tinyimage",
-  "version": "1.2.8",
-  "description": "一款压缩效率极高的图片压缩工具",
-  "main": "main.js",
+  "private": true,
+  "version": "2.1.0",
+  "type": "module",
   "scripts": {
-    "start": "electron .",
-    "mac": "export CSC_IDENTITY_AUTO_DISCOVERY=false",
-    "build": "electron-builder --x64 --publish never",
-    "release": "electron-builder --x64 --publish always"
-  },
-  "build": {
-    "appId": "com.focusbe.tinyimage",
-    "asar": false,
-    "publish": [
-      {
-        "provider": "github"
-      }
-    ],
-    "asarUnpack": [
-      "node_modules/mozjpeg/",
-      "node_modules/tinypngjs/",
-      "node_modules/execa/",
-      "node_modules/imagemin/",
-      "renderer"
-    ],
-    "mac": {
-      "category": "your.app.category.type",
-      "icon": "assets/tinypng",
-      "target": [
-        "zip",
-        "dmg"
-      ]
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "assets/tinypng"
-    },
-    "nsis": {
-      "oneClick": true,
-      "allowToChangeInstallationDirectory": false
-    },
-    "files": {
-      "filter": [
-        "**/*",
-        "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme,test,__tests__,tests,powered-test,example,examples,*.d.ts}",
-        "!**/node_modules/.bin",
-        "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
-        "!**/._*",
-        "!.editorconfig",
-        "!package.json",
-        "!README.md",
-        "!yarn.lock",
-        "!package-lock.json"
-      ]
-    },
-    "directories": {
-      "output": "output"
-    }
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/focusbe/tinyImage.git"
-  },
-  "author": "刘鹏",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/focusbe/tinyImage/issues"
-  },
-  "homepage": "https://github.com/focusbe/tinyImage#readme",
-  "devDependencies": {
-    "cross-env": "^7.0.3",
-    "electron": "^24.1.2",
-    "electron-builder": "^23.6.0"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "start": "tauri dev",
+    "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
+    "package:win": "tauri build"
   },
   "dependencies": {
-    "@electron/remote": "^2.0.9",
-    "electron-updater": "^5.3.0",
-    "fs-extra": "^8.1.0",
-    "imagemin": "^8.0.1",
-    "tinypngjs": "^1.2.10"
+    "@tauri-apps/api": "^2"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.3"
   }
 }

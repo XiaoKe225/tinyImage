@@ -1,0 +1,37 @@
+[package]
+name = "tinyimage"
+version = "2.1.0"
+description = "纯本地图片压缩工具（Tauri）"
+authors = ["XiaoKe225"]
+edition = "2021"
+
+[lib]
+name = "tinyimage_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "bmp", "tiff", "ico", "webp"] }
+oxipng = "9"
+mozjpeg = "0.10"
+mozjpeg-sys = { version = "2.2", features = ["jpegtran"] }
+libc = "0.2"
+jpegli = "0.1.0"
+imagequant = "4"
+png = "0.17"
+webp = "0.3"
+gif = "0.13"
+tiff = { version = "0.11", default-features = true }
+tokio = { version = "1", features = ["time", "sync"] }
+
+# Windows MSVC 多配置下上游 jpegli-sys 找不到 lib/Debug/*.lib；用本地补丁。
+[patch.crates-io]
+jpegli-sys = { path = "vendor/jpegli-sys" }
+
+[dev-dependencies]
+# 测试复用 image 编码器
