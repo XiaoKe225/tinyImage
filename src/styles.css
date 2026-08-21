@@ -28,7 +28,7 @@ body {
   border: 1px dashed transparent;
   transition: background 0.15s ease, border-color 0.15s ease;
   user-select: none;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .drop.hover {
@@ -280,26 +280,56 @@ body {
 }
 
 .modal-card.tip-card {
-  width: min(100%, 420px);
-  max-height: calc(100vh - 24px);
-  overflow: auto;
+  width: min(100%, 340px);
+  max-height: calc(100% - 16px);
+  padding: 10px 10px 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .tip-msg {
-  margin-bottom: 10px;
-  font-size: 11px;
+  margin-bottom: 6px;
+  font-size: 10px;
   color: #8b949e;
+  flex: 0 0 auto;
 }
 
 .tip-qr {
   display: block;
   width: 100%;
+  max-height: min(220px, calc(100vh - 118px));
   height: auto;
+  object-fit: contain;
   border-radius: 6px;
-  margin-bottom: 12px;
+  margin: 0 0 8px;
   background: #0d1117;
+  flex: 1 1 auto;
+}
+
+.tip-card .modal-title {
+  margin-bottom: 4px;
+  flex: 0 0 auto;
+}
+
+.tip-card .modal-actions {
+  flex: 0 0 auto;
+  margin-top: 0;
 }
 
 .tip-card .modal-actions .btn {
   flex: 1 1 100%;
+}
+
+/* 打赏弹窗禁止出现系统白滚动条 */
+#tip-modal,
+#tip-modal .modal-card {
+  overflow: hidden;
+}
+
+#tip-modal::-webkit-scrollbar,
+#tip-modal *::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }

@@ -1,7 +1,11 @@
 import { invoke } from "@tauri-apps/api/core";
 import { LogicalPosition } from "@tauri-apps/api/dpi";
 import { listen } from "@tauri-apps/api/event";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import {
+  availableMonitors,
+  getCurrentWindow,
+  type Monitor,
+} from "@tauri-apps/api/window";
 import tipQrUrl from "./assets/tip-qr.png";
 
 type ProgressEvent = {
@@ -130,13 +134,97 @@ function applyIntensityFromSettings() {
   syncIntensityLabel();
 }
 
-async function restoreWindowPosition() {
-  const s = loadSettings();
-  if (typeof s.x !== "number" || typeof s.y !== "number") return;
+/** 标题栏至少与某块显示器工作区有足够重叠，才算「找得到窗口」 */
+function isLogicalPosOnAnyMonitor(
+  lx: number,
+  ly: number,
+  winW: number,
+  winH: number,
+  monitors: Monitor[],
+): boolean {
+  const titleH = Math.min(48, winH);
+  for (const m of monitors) {
+    const sf = m.scaleFactor || 1;
+    const wx = m.workArea.position.x / sf;
+    const wy = m.workArea.position.y / sf;
+    const ww = m.workArea.size.width / sf;
+    const wh = m.workArea.size.height / sf;
+    const overlapW =
+      Math.max(0, Math.min(lx + winW, wx + ww) - Math.max(lx, wx));
+    const overlapH =
+      Math.max(0, Math.min(ly + titleH, wy + wh) - Math.max(ly, wy));
+    if (overlapW >= 80 && overlapH >= 20) return true;
+  }
+  return false;
+}
+
+/**
+ * 启动可见性：恢复上次位置；若已跑到屏外（换屏/分辨率）则居中并清坏坐标；强制显示+聚焦。
+ * 不改变「只持久化位置、不持久化大小」的已拍板口径。
+ */
+async function ensureWindowVisible() {
+  const win = getCurrentWindow();
   try {
-    await getCurrentWindow().setPosition(new LogicalPosition(s.x, s.y));
+    await win.unminimize();
+    await win.show();
   } catch {
-    /* 权限/多显示器异常时保持系统默认位置 */
+    /* ignore */
+  }
+
+  let sizeW = 360;
+  let sizeH = 360;
+  try {
+    const outer = await win.outerSize();
+    const factor = await win.scaleFactor();
+    sizeW = Math.max(1, Math.round(outer.width / factor));
+    sizeH = Math.max(1, Math.round(outer.height / factor));
+  } catch {
+    /* 用默认最小窗 */
+  }
+
+  const s = loadSettings();
+  const hasPos = typeof s.x === "number" && typeof s.y === "number";
+  let placed = false;
+
+  if (hasPos) {
+    try {
+      const monitors = await availableMonitors();
+      if (
+        monitors.length &&
+        isLogicalPosOnAnyMonitor(s.x!, s.y!, sizeW, sizeH, monitors)
+      ) {
+        await win.setPosition(new LogicalPosition(s.x!, s.y!));
+        placed = true;
+      }
+    } catch {
+      /* 校验失败则走居中 */
+    }
+  }
+
+  if (!placed) {
+    try {
+      await win.center();
+    } catch {
+      /* ignore */
+    }
+    if (hasPos) {
+      // 清掉屏外坐标，避免下次启动再次「找不到窗」
+      try {
+        const cur = loadSettings();
+        localStorage.setItem(
+          SETTINGS_KEY,
+          JSON.stringify({ intensity: cur.intensity }),
+        );
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  try {
+    await win.setFocus();
+  } catch {
+    /* ignore */
   }
 }
 
@@ -354,7 +442,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   const win = getCurrentWindow();
 
   applyIntensityFromSettings();
-  await restoreWindowPosition();
+  await ensureWindowVisible();
   // 启动时清掉历史尺寸字段，避免旧版数据残留
   saveSettings({});
 

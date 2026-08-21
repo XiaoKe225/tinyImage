@@ -1,53 +1,141 @@
-# TinyImage 2.1.1
+# TinyImage
 
-纯本地桌面图片压缩工具（**Tauri 2 + Rust**）。  
-不调用 TinyPNG，不消耗云端额度，断网可压缩。
+**纯本地桌面图片压缩工具**（Windows · Tauri 2 + Rust）· 当前版本 **2.1.2**。
 
-支持：JPG / PNG / WebP / GIF / BMP / TIFF / ICO。  
-主界面可打开 **打赏支持**（本地展示支付宝 / 微信收款码，不联网）。
+不上传图片、不调用 TinyPNG / 云端压缩 API、不消耗额度；断网也能用。拖入图片即可按力度压缩，并在确认后覆盖原文件。
 
-## 开发
+---
 
-在项目根目录：
+## 功能特点
+
+- **纯本地压缩**：全部在本机完成，图片不会离开你的电脑
+- **多格式**：JPG / JPEG / PNG / WebP / GIF / BMP / TIFF / ICO
+- **力度滑条**：0～100，默认偏画质；力度越大，体积通常越小（会自动记住）
+- **批量处理**：可同时拖入多张图或整个文件夹；带进度、可取消剩余任务
+- **覆盖前确认**：写回原路径前会弹出确认，避免误操作
+- **失败 / 跳过列表**：压不了或跳过的文件会列出原因，可一键复制
+- **窗口位置记忆**：下次启动回到上次位置；窗口大小每次使用默认最小尺寸
+- **打赏支持**：应用内可查看支付宝 / 微信收款码（本地展示，不联网）
+
+---
+
+## 它能帮你做什么
+
+| 场景 | 说明 |
+| --- | --- |
+| 发图、存档前减小体积 | 在尽量保住观感的前提下缩小文件 |
+| 批量整理相册 / 素材 | 一次拖入多张或文件夹，排队压缩 |
+| 无网或内网环境 | 不依赖外网压缩服务 |
+| 不想把图传到第三方 | 无云端 API、无账号、无额度 |
+
+---
+
+## 安装
+
+1. 打开 [Releases](https://github.com/XiaoKe225/tinyImage/releases)
+2. 下载 **`TinyImage_2.1.2_x64-setup.exe`**（或同版本 `*-protected.zip`）
+3. 安装并启动 **TinyImage**
+
+> 正式对外请只用 Release 里的 **protected** 安装包（Pack 含前端混淆）。源码树内 `release\` 目录默认不入库。
+
+---
+
+## 使用方法
+
+1. 启动应用（默认窗口为最小可用尺寸）
+2. 按需要调节 **压缩力度**（也可先保持默认 0）
+3. 将图片或文件夹 **拖入窗口**
+4. 在确认框中确认后开始压缩（成功后会覆盖原文件）
+5. 查看状态栏结果；如有失败 / 跳过，可在列表中查看或复制
+
+**取消**：压缩进行中可点「取消剩余」，尚未开始的任务会停下。
+
+---
+
+## 支持格式
+
+| 格式 | 说明 |
+| --- | --- |
+| JPG / JPEG | 本地有损优化 |
+| PNG | 本地优化（含有损量化路径） |
+| WebP / GIF / BMP / TIFF / ICO | 本地处理；ICO 按 Windows 兼容策略编码 |
+
+输出保持**原扩展名**，覆盖写入原路径（需确认）。
+
+---
+
+## 打赏支持
+
+如果 TinyImage 对你有帮助，欢迎打赏支持开发（支付宝 / 微信支付）。
+
+收款码仅作展示，扫码在手机支付 App 内完成；项目本身不联网收款。
+
+<p align="center">
+  <img src="docs/tip-qr.png" alt="支付宝与微信支付收款码" width="520" />
+</p>
+
+应用内也可点击主界面 **「打赏支持」** 查看同一组收款码。
+
+---
+
+## 从源码运行（开发者）
+
+环境要求：Node.js、Rust、Windows 上还需 **CMake** 与 **MSVC Build Tools**（Jpegli 本地编译）。
 
 ```bash
 npm install
 npm run start
 ```
 
-**Jpegli 构建**需本机 **CMake** + **MSVC Build Tools**（首次 `cargo`/`tauri` 会编译 `src-tauri/vendor/jpegli-sys`）。
-
-**不要**在未授权时执行打包命令。
-
-## 测试
+运行测试：
 
 ```bash
 npm run test:rust
 ```
 
-## 打包（须授权）
-
-仅当维护者书面 **「授权打包」**（或「授权 release」）后执行：
+打包安装包（维护者 · 须授权）：
 
 ```bash
-npm run package:win
+npm run pack:verify
 ```
 
-产物：`src-tauri\target\release\bundle\nsis\TinyImage_2.1.1_x64-setup.exe`
+或双击 `加壳发布并校验.bat`。产出：`release\protected\`（含安装包 + SHA256SUMS）与 `release\TinyImage-*-win-x64-protected.zip`。  
+Pack 会对前端 JS 做混淆（开发构建不会）；**不使用** UPX/Themida 等原生壳。
 
-本阶段**无**自动更新、**无**代码签名。
+---
 
-## 仓库结构（精简）
+## 技术概要
+
+| 项 | 说明 |
+| --- | --- |
+| 壳 | Tauri 2；Pack 含前端 JS 混淆（非原生壳） |
+| 引擎 | Rust 本地管线（含 Jpegli 等） |
+| 前端 | Vite + TypeScript |
+| 网络 | 压缩路径不需要网络 |
+
+更细的实现说明见仓库内 `技术实施白皮书_v1.0.md`（面向开发协作，不是使用手册）。  
+维护者摘要：`docs/维护说明.md` · AI 协作入口：`AGENTS.md`。
+
+---
+
+## 仓库结构
 
 | 路径 | 职责 |
-|---|---|
-| `src/` | 前端（Vite + TypeScript） |
-| `src-tauri/` | Rust 压缩引擎、队列、Tauri 壳 |
-| `legacy-electron/` | 旧 Electron 1.2.x（仅对照，不演进） |
-| `身份卡_优化版.md` | AI / 协作纪律 |
-| `技术实施白皮书_v1.0.md` | 产品蓝图（文内修订号为准） |
+| --- | --- |
+| `src/` | 前端 |
+| `src-tauri/` | Rust 引擎 + Tauri |
+| `scripts/` | Pack / 混淆脚本 |
+| `docs/` | 打赏图、维护说明 |
+| `legacy-electron/` | 旧版对照（不演进） |
 
-## 文档
+---
 
-- `身份卡_优化版.md`
-- `技术实施白皮书_v1.0.md`（当前 **v1.30.0** · T032 打赏；T004 已结案）
+## 反馈
+
+问题与建议请通过 [GitHub Issues](https://github.com/XiaoKe225/tinyImage/issues) 反馈。
+
+---
+
+## License
+
+以本仓库根目录 / GitHub 仓库页面所示许可证为准。若暂未声明，使用前请先联系维护者确认。

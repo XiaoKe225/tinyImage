@@ -1,22 +1,27 @@
 {
   "name": "tinyimage",
   "private": true,
-  "version": "2.1.1",
+  "version": "2.1.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "obfuscate": "node scripts/obfuscate-dist.mjs",
+    "build:pack-frontend": "npm run build && npm run obfuscate",
     "preview": "vite preview",
     "tauri": "tauri",
     "start": "tauri dev",
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
-    "package:win": "tauri build"
+    "package:win": "tauri build",
+    "pack": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1 -Action Pack",
+    "pack:verify": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1 -Action Pack -Verify"
   },
   "dependencies": {
     "@tauri-apps/api": "^2"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
+    "javascript-obfuscator": "^4.1.1",
     "typescript": "~5.6.2",
     "vite": "^6.0.3"
   }

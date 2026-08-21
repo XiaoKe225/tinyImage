@@ -39,6 +39,9 @@ src-tauri/fixture_*.ico
 # OS
 Thumbs.db
 
+# Pack output (local artifacts; do not commit)
+release/
+
 # Editor / recovery junk
 *.try
 *.recovered.txt
