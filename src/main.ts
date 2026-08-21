@@ -6,7 +6,7 @@ import {
   getCurrentWindow,
   type Monitor,
 } from "@tauri-apps/api/window";
-import tipQrUrl from "./assets/tip-qr.jpg";
+import tipQrUrl from "./assets/tip-qr.png";
 
 type ProgressEvent = {
   done: number;

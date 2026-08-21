@@ -70,7 +70,13 @@
 
 收款码仅作展示，扫码在手机支付 App 内完成；项目本身不联网收款。
 
-![支付宝与微信支付收款码](docs/tip-qr.jpg)
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/XiaoKe225/tinyImage/master/docs/tip-qr.png"
+    alt="支付宝与微信支付收款码"
+    width="520"
+  />
+</p>
 
 应用内也可点击主界面 **「打赏支持」** 查看同一组收款码。
 
