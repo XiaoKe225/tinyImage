@@ -72,7 +72,7 @@
 
 <p align="center">
   <img
-    src="https://raw.githubusercontent.com/XiaoKe225/tinyImage/master/docs/tip-qr.png"
+    src="https://cdn.jsdelivr.net/gh/XiaoKe225/tinyImage@master/docs/tip-qr.png"
     alt="支付宝与微信支付收款码"
     width="520"
   />
