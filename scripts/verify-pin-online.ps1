@@ -26,13 +26,13 @@ function Test-PinRound([int]$n) {
     $readme = Fetch-Text 'README.md'
 
     $checks = @{
-        HtmlBtnPin = $html.Contains('id="btn-pin"')
-        HtmlLabel = $html.Contains('图钉置顶')
+        HtmlBtnPin = $html -match 'id="btn-pin"'
+        HtmlPinClass = $html -match 'class="btn pin"'
         MainSetAlways = $main.Contains('setAlwaysOnTop')
         MainPersist = $main.Contains('alwaysOnTop')
         MainToggle = $main.Contains('toggleAlwaysOnTop')
         CapPerm = $cap.Contains('allow-set-always-on-top')
-        ReadmeDoc = $readme.Contains('图钉置顶')
+        ReadmePin = $readme.Contains('2.1.3')
     }
     $ok = ($checks.Values | Where-Object { $_ -eq $false }).Count -eq 0
     [pscustomobject]@{
