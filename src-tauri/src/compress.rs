@@ -1297,6 +1297,22 @@ mod tests {
         );
     }
 
+    /// T037：图钉置顶（alwaysOnTop）已接线：UI + 权限 + 前端 API。
+    #[test]
+    fn t037_pin_always_on_top_wired() {
+        let html = include_str!("../../index.html");
+        assert!(html.contains("btn-pin"), "须有图钉按钮");
+        assert!(html.contains("图钉置顶"), "按钮文案须面向用户");
+        let main_ts = include_str!("../../src/main.ts");
+        assert!(main_ts.contains("setAlwaysOnTop"), "须调用置顶 API");
+        assert!(main_ts.contains("alwaysOnTop"), "须持久化置顶状态");
+        let cap = include_str!("../capabilities/default.json");
+        assert!(
+            cap.contains("allow-set-always-on-top"),
+            "须授权 setAlwaysOnTop"
+        );
+    }
+
     /// T022 逻辑5：加速后滑条体积仍单调，0 档仍保锐。
     #[test]
     fn t022_logic5_speed_keeps_quality_and_slider() {

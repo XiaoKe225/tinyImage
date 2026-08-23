@@ -40,6 +40,7 @@ type AppSettings = {
   intensity: number;
   x?: number;
   y?: number;
+  alwaysOnTop?: boolean;
 };
 
 let busy = false;
@@ -62,6 +63,7 @@ const el = {
   intensity: () => document.getElementById("intensity") as HTMLInputElement | null,
   intensityVal: () => document.getElementById("intensity-val"),
   btnTip: () => document.getElementById("btn-tip") as HTMLButtonElement | null,
+  btnPin: () => document.getElementById("btn-pin") as HTMLButtonElement | null,
 };
 
 function clampIntensity(n: number): number {
@@ -81,6 +83,7 @@ function loadSettings(): AppSettings {
       intensity: clampIntensity(Number(o.intensity ?? 0)),
       x: typeof o.x === "number" ? o.x : undefined,
       y: typeof o.y === "number" ? o.y : undefined,
+      alwaysOnTop: o.alwaysOnTop === true,
       // 故意忽略历史 width/height：窗口大小不做持久化
     };
   } catch {
@@ -96,6 +99,8 @@ function saveSettings(partial: Partial<AppSettings>) {
     ),
     x: partial.x !== undefined ? partial.x : cur.x,
     y: partial.y !== undefined ? partial.y : cur.y,
+    alwaysOnTop:
+      partial.alwaysOnTop !== undefined ? partial.alwaysOnTop : cur.alwaysOnTop,
   };
   try {
     // 不写 width/height，顺带清掉旧版里的尺寸字段
@@ -208,13 +213,11 @@ async function ensureWindowVisible() {
       /* ignore */
     }
     if (hasPos) {
-      // 清掉屏外坐标，避免下次启动再次「找不到窗」
       try {
         const cur = loadSettings();
-        localStorage.setItem(
-          SETTINGS_KEY,
-          JSON.stringify({ intensity: cur.intensity }),
-        );
+        const preserved: AppSettings = { intensity: cur.intensity };
+        if (cur.alwaysOnTop) preserved.alwaysOnTop = true;
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(preserved));
       } catch {
         /* ignore */
       }
@@ -226,6 +229,41 @@ async function ensureWindowVisible() {
   } catch {
     /* ignore */
   }
+}
+
+function syncPinButton(on: boolean) {
+  const btn = el.btnPin();
+  if (!btn) return;
+  btn.classList.toggle("active", on);
+  btn.setAttribute("aria-pressed", on ? "true" : "false");
+  btn.title = on ? "已置顶（点击取消）" : "窗口置顶";
+}
+
+/** 恢复/应用图钉置顶（本机记住） */
+async function applyAlwaysOnTopFromSettings() {
+  const want = loadSettings().alwaysOnTop === true;
+  try {
+    await getCurrentWindow().setAlwaysOnTop(want);
+    syncPinButton(want);
+  } catch {
+    syncPinButton(false);
+  }
+}
+
+async function toggleAlwaysOnTop() {
+  const win = getCurrentWindow();
+  let next = false;
+  try {
+    const cur = await win.isAlwaysOnTop();
+    next = !cur;
+    await win.setAlwaysOnTop(next);
+  } catch {
+    setStatus("置顶切换失败", true);
+    return;
+  }
+  saveSettings({ alwaysOnTop: next });
+  syncPinButton(next);
+  setStatus(next ? "已置顶" : "已取消置顶");
 }
 
 function scheduleSaveWindowPosition() {
@@ -443,6 +481,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   applyIntensityFromSettings();
   await ensureWindowVisible();
+  await applyAlwaysOnTopFromSettings();
   // 启动时清掉历史尺寸字段，避免旧版数据残留
   saveSettings({});
 
@@ -458,6 +497,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   });
 
   el.btnTip()?.addEventListener("click", () => openTipModal());
+  el.btnPin()?.addEventListener("click", () => {
+    void toggleAlwaysOnTop();
+  });
 
   el.btnCancel()?.addEventListener("click", () => {
     void invoke("cancel_batch");

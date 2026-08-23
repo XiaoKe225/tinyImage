@@ -3859,7 +3859,7 @@ dependencies = [
 
 [[package]]
 name = "tinyimage"
-version = "2.1.2"
+version = "2.1.3"
 dependencies = [
  "gif 0.13.3",
  "image",
