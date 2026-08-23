@@ -15,6 +15,42 @@ body {
   height: 100%;
   overflow: hidden;
   background: #24292e;
+  position: relative;
+}
+
+.pin-icon {
+  position: fixed;
+  top: 6px;
+  right: 6px;
+  z-index: 200;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #3d444d;
+  border-radius: 6px;
+  background: rgba(33, 38, 45, 0.92);
+  color: #8b949e;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.pin-icon:hover {
+  border-color: #d29922;
+  color: #d29922;
+}
+
+.pin-icon.active {
+  border-color: #d29922;
+  color: #f0c14b;
+  background: rgba(210, 153, 34, 0.16);
+}
+
+.pin-svg {
+  display: block;
+  pointer-events: none;
 }
 
 .drop {
@@ -267,24 +303,6 @@ body {
   justify-content: center;
   gap: 8px;
   flex-wrap: wrap;
-}
-
-.btn.pin {
-  background: #21262d;
-  border: 1px solid #3d444d;
-  color: #e6edf3;
-  padding: 5px 12px;
-}
-
-.btn.pin:hover {
-  border-color: #d29922;
-  color: #d29922;
-}
-
-.btn.pin.active {
-  border-color: #d29922;
-  color: #f0c14b;
-  background: rgba(210, 153, 34, 0.12);
 }
 
 .btn.tip {

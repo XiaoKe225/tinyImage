@@ -8,6 +8,21 @@
     <script type="module" src="/src/main.ts" defer></script>
   </head>
   <body>
+    <button
+      type="button"
+      id="btn-pin"
+      class="pin-icon"
+      aria-pressed="false"
+      aria-label="窗口置顶"
+      title="窗口置顶"
+    >
+      <svg class="pin-svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+        <path
+          fill="currentColor"
+          d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1.03-1 1.03 1v-7H19v-2c-1.66 0-3-1.34-3-3z"
+        />
+      </svg>
+    </button>
     <div id="drop" class="drop">
       <p class="hint">拖入文件或文件夹</p>
       <p class="sub">纯本地 · JPG/PNG/WebP/GIF/BMP/TIFF/ICO · 可同时处理多张</p>
@@ -35,15 +50,6 @@
         <ul id="skip-list"></ul>
       </div>
       <div class="footer-actions">
-        <button
-          type="button"
-          id="btn-pin"
-          class="btn pin"
-          aria-pressed="false"
-          title="窗口置顶"
-        >
-          图钉置顶
-        </button>
         <button type="button" id="btn-tip" class="btn tip">打赏支持</button>
       </div>
     </div>

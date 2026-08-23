@@ -12,6 +12,8 @@
     "tauri": "tauri",
     "start": "tauri dev",
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
+    "verify:pin-local": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-pin-local.ps1",
+    "verify:speed-local": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-speed-local.ps1",
     "package:win": "tauri build",
     "pack": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1 -Action Pack",
     "pack:verify": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1 -Action Pack -Verify"

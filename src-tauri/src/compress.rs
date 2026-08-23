@@ -1,7 +1,8 @@
 //! T022：压缩加速 + 窗口最小常态 + 用户文案去黑话。
-//! - 真根因（慢）：①中高档 Jpegli+Moz 双跑且 Moz trellis；②0 档 q 阶梯过长；③无损 progressive 双试；④sizeRefine 多次。
+//! T038：在不改压缩率/体积前提下再加速——保真区并行试路（无损+有损、PNG 无损+quant）。
+//! - 真根因（慢）：①中高档 Jpegli+Moz 双跑且 Moz trellis；②0 档 q 阶梯过长；③无损 progressive 双试；④sizeRefine 多次；⑤image 慢解 JPEG 做 SSIM 门禁；⑥PNG 无损与 quant 串行。
 //! - 假根因：单纯「再加线程」不解决单张编码路径过重。
-//! - 策略：全程 Jpegli 优先；缩短 0 档阶梯；无损只跑基线；精炼/恢复次数砍半；观感达标可跳过无损。
+//! - 策略：全程 Jpegli 优先；MozJPEG 快解；保真区并行试路；缩短 0 档阶梯；精炼/恢复次数砍半；观感达标可跳过无损。
 
 use crate::jpeg_lossless::jpeg_lossless_optimize_ex;
 use crate::quality::{
@@ -429,7 +430,6 @@ fn jpeg_visual_zero(
         let method = format!(
             "jpegli/q{q}/444/i0+visual/hf{hf:.2}/e{edge:.2}/p{psnr:.0}"
         );
-        // first-fit：最高合格 q 立即返回，绝不继续往更糊的 q 搜最小体积
         return Ok((out, ssim, method));
     }
     Err(last_err)
@@ -514,7 +514,6 @@ pub fn compress_jpeg(data: &[u8], intensity: u8) -> Result<(Vec<u8>, f64, String
     };
 
     if intensity == 0 {
-        // 先跑观感：明显压小则跳过昂贵无损竞速
         let visual = jpeg_visual_zero(data, &original).ok();
         if let Some(ref v) = visual {
             if (v.0.len() as f64) <= (data.len() as f64) * ZERO_SKIP_LOSSLESS_RATIO {
@@ -528,17 +527,28 @@ pub fn compress_jpeg(data: &[u8], intensity: u8) -> Result<(Vec<u8>, f64, String
     }
 
     if fidelity_first {
-        // 速度：最多试 2 个有损 q + 一次无损，取更小
-        let lossless = jpeg_lossless_candidates(data, intensity, &original);
-        let mut best = lossless
-            .into_iter()
-            .min_by(|a, b| a.0.len().cmp(&b.0.len()));
-        let mut last_err = format!("力度 {intensity} 保真路径无可用结果");
-
         let q_lossy = quality.max(JPEG_FIDELITY_Q_FLOOR).min(96);
-        for q in unique_qualities([q_lossy, q_lossy.saturating_sub(8).max(JPEG_FIDELITY_Q_FLOOR)])
-        {
-            match attempt(q, false, "perceptual") {
+        let q2 = q_lossy.saturating_sub(8).max(JPEG_FIDELITY_Q_FLOOR);
+        let (lossless_best, perceptual) = std::thread::scope(|s| {
+            let l = s.spawn(|| {
+                jpeg_lossless_candidates(data, intensity, &original)
+                    .into_iter()
+                    .min_by(|a, b| a.0.len().cmp(&b.0.len()))
+            });
+            let a1 = s.spawn(|| attempt(q_lossy, false, "perceptual"));
+            let a2 = s.spawn(|| attempt(q2, false, "perceptual"));
+            (
+                l.join().unwrap_or(None),
+                (
+                    a1.join().unwrap_or_else(|_| Err("并行试路失败".into())),
+                    a2.join().unwrap_or_else(|_| Err("并行试路失败".into())),
+                ),
+            )
+        });
+        let mut best = lossless_best;
+        let mut last_err = format!("力度 {intensity} 保真路径无可用结果");
+        for attempt_res in [perceptual.0, perceptual.1] {
+            match attempt_res {
                 Ok(v) => {
                     if v.0.len() >= data.len() {
                         continue;
@@ -556,7 +566,22 @@ pub fn compress_jpeg(data: &[u8], intensity: u8) -> Result<(Vec<u8>, f64, String
     }
 
     let primary_420 = jpeg_use_420(intensity);
-    let mut best = match attempt(quality, primary_420, "detail") {
+    let q_ref = quality.saturating_sub(12).max(28);
+    let do_refine = intensity >= JPEG_SIZE_REFINE_THRESHOLD;
+
+    let (primary_res, refine_res) = std::thread::scope(|s| {
+        let p = s.spawn(|| attempt(quality, primary_420, "detail"));
+        let r = if do_refine {
+            Some(s.spawn(|| attempt(q_ref, true, "sizeRefine")))
+        } else {
+            None
+        };
+        let pr = p.join().unwrap_or_else(|_| Err("并行试路失败".into()));
+        let rr = r.map(|h| h.join().unwrap_or_else(|_| Err("并行试路失败".into())));
+        (pr, rr)
+    });
+
+    let mut best = match primary_res {
         Ok(v) => v,
         Err(first) => {
             let mut recovered = Err(first.clone());
@@ -586,13 +611,9 @@ pub fn compress_jpeg(data: &[u8], intensity: u8) -> Result<(Vec<u8>, f64, String
         }
     };
 
-    if intensity >= JPEG_SIZE_REFINE_THRESHOLD {
-        // 速度：只精炼一档
-        let q_ref = quality.saturating_sub(12).max(28);
-        if let Ok(cand) = attempt(q_ref, true, "sizeRefine") {
-            if cand.0.len() < best.0.len() {
-                best = cand;
-            }
+    if let Some(Ok(cand)) = refine_res {
+        if cand.0.len() < best.0.len() {
+            best = cand;
         }
     }
 
@@ -834,8 +855,14 @@ pub fn compress_png(data: &[u8], intensity: u8) -> Result<(Vec<u8>, f64, String)
     let colors = png_max_colors(intensity);
     let dither = png_dither_level(intensity);
 
-    let lossless = oxipng_best(data, false).ok();
-    let lossy_raw = quantize_png_once(data, qmin, colors, dither).ok();
+    let (lossless, lossy_raw) = std::thread::scope(|s| {
+        let lh = s.spawn(|| oxipng_best(data, false).ok());
+        let rh = s.spawn(|| quantize_png_once(data, qmin, colors, dither).ok());
+        (
+            lh.join().unwrap_or(None),
+            rh.join().unwrap_or(None),
+        )
+    });
     let lossy = lossy_raw.map(|b| oxipng_finalize(&b));
 
     let mut best: Option<(Vec<u8>, f64, String)> = None;
@@ -1297,12 +1324,18 @@ mod tests {
         );
     }
 
-    /// T037：图钉置顶（alwaysOnTop）已接线：UI + 权限 + 前端 API。
+    /// T037：图钉置顶（alwaysOnTop）已接线：右上角 SVG 图标 + 权限 + 前端 API。
     #[test]
     fn t037_pin_always_on_top_wired() {
         let html = include_str!("../../index.html");
         assert!(html.contains("btn-pin"), "须有图钉按钮");
-        assert!(html.contains("图钉置顶"), "按钮文案须面向用户");
+        assert!(html.contains("pin-icon"), "图钉须为右上角图标");
+        assert!(html.contains("pin-svg"), "图钉须为 SVG 图标");
+        assert!(html.contains("aria-label=\"窗口置顶\""), "须有置顶无障碍标签");
+        assert!(
+            !html.contains("图钉置顶"),
+            "禁止底部文字图钉按钮"
+        );
         let main_ts = include_str!("../../src/main.ts");
         assert!(main_ts.contains("setAlwaysOnTop"), "须调用置顶 API");
         assert!(main_ts.contains("alwaysOnTop"), "须持久化置顶状态");
@@ -1384,7 +1417,7 @@ mod tests {
         let raw = encode_jpeg_fallback(&img, 92).unwrap();
         let orig = decode_to_rgb(&raw).unwrap();
         let (out, ssim, method) = compress_jpeg(&raw, 0).expect("i0");
-        let dec = decode_to_rgb(&out).unwrap();
+        let _dec = decode_to_rgb(&out).unwrap();
         let mush = encode_jpeg_jpegli_ex(&orig, 74, false, false).unwrap();
         let mush_dec = decode_to_rgb(&mush).unwrap();
         let mush_ssim = ssim_rgb(&orig, &mush_dec).unwrap_or(0.0);
@@ -1872,6 +1905,73 @@ mod tests {
         match jpeg_visual_zero(&raw, &orig) {
             Ok((o, s, m)) => println!("visual_ok {} s={s:.4} {m}", o.len()),
             Err(e) => println!("visual_err {e}"),
+        }
+    }
+
+    #[test]
+    fn t038_speed_volume_tool_measured() {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        use std::time::Instant;
+
+        let enforce_timing = std::env::var("TINYIMAGE_T038_TIMING")
+            .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+            .unwrap_or(false);
+
+        fn digest(bytes: &[u8]) -> u64 {
+            let mut h = DefaultHasher::new();
+            bytes.hash(&mut h);
+            h.finish()
+        }
+
+        let img = photo_rgb(1280, 720);
+        let raw = encode_jpeg_fallback(&img, 92).unwrap();
+        let png_img = photo_rgb(512, 384);
+        let mut png_enc = Vec::new();
+        DynamicImage::ImageRgb8(png_img)
+            .write_to(&mut std::io::Cursor::new(&mut png_enc), image::ImageFormat::Png)
+            .unwrap();
+
+        let cases: Vec<(&str, Vec<u8>, u8, u128, Option<usize>)> = vec![
+            ("jpeg_i0", raw.clone(), 0, 4_000, Some(461617)),
+            ("jpeg_i34", raw.clone(), 34, 3_200, None),
+            ("jpeg_i80", raw.clone(), 80, 3_200, None),
+            ("png_i0", png_enc.clone(), 0, 6_500, None),
+            ("png_i60", png_enc.clone(), 60, 16_000, None),
+        ];
+
+        for (name, data, intensity, budget_ms, golden_len) in cases {
+            let t0 = Instant::now();
+            let (out1, ssim1, m1) = if name.starts_with("png") {
+                compress_png(&data, intensity).expect(name)
+            } else {
+                compress_jpeg(&data, intensity).expect(name)
+            };
+            let ms = t0.elapsed().as_millis();
+            let (out2, _, m2) = if name.starts_with("png") {
+                compress_png(&data, intensity).expect(name)
+            } else {
+                compress_jpeg(&data, intensity).expect(name)
+            };
+            let len = out1.len();
+            let hash = digest(&out1);
+            println!(
+                "T038 {name} i{intensity}: {ms}ms len={len} hash={hash} ssim={ssim1:.4} {m1}"
+            );
+            assert_eq!(out1, out2, "{name} must be deterministic");
+            assert_eq!(m1, m2);
+            if enforce_timing {
+                assert!(
+                    ms <= budget_ms,
+                    "T038 {name} too slow: {ms}ms > {budget_ms}ms"
+                );
+            }
+            assert!(out1.len() < data.len(), "{name} must shrink");
+            if let Some(expect_len) = golden_len {
+                assert_eq!(len, expect_len, "{name} volume changed");
+            }
+            // 体积指纹：同输入同力度须稳定
+            assert_eq!(hash, digest(&out2), "{name} hash unstable");
         }
     }
 }

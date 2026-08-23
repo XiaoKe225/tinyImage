@@ -236,6 +236,7 @@ function syncPinButton(on: boolean) {
   if (!btn) return;
   btn.classList.toggle("active", on);
   btn.setAttribute("aria-pressed", on ? "true" : "false");
+  btn.setAttribute("aria-label", on ? "已置顶（点击取消）" : "窗口置顶");
   btn.title = on ? "已置顶（点击取消）" : "窗口置顶";
 }
 
